@@ -1,0 +1,41 @@
+{
+  "users" : [
+    {
+      "user"  : "UserName",
+      "email" : "user_email@something.com",
+
+      "host" : [
+        { "github" : "~/.ssh/id_github" },
+        { "bitbucket" : "~/.ssh/id_bitbucket" }
+      ]
+
+    }
+  ],
+
+  "projects" : [
+    {
+      "name" : "git2py",
+      "path" : "~/PycharmProjects/git2py",
+      "desc" : "Domain Specific Language to manipulate GIT repositories with a REPL interactive SHELL",
+      "tags" : ["git", "DSL", "shell", "REPL"],
+      "host" : "github"
+    },
+    {
+      "name" : "pxshell",
+      "path" : "~/PycharmProjects/pxshell",
+      "desc" : "Alternative Python Shell for Scientific computing and calculations.",
+      "tags" : ["tools", "matlab", "shell", "REPL", "finance", "engineerign"],
+      "host" : "github"
+    },
+    {
+      "name" : "utils3",
+      "path" : "~/PycharmProjects/utils3",
+      "desc" : "Python Helpers and utilities for Functional Programming, Fluent Interface and Path Manipulation, based on functional programming languages ( Haskell, Ruby and Fsharp and Scala)",
+      "tags" : ["tools", "DSL", "functional", "programming", "haskell", "ruby"],
+      "host" : "github"
+    }
+
+  ]
+
+
+}

@@ -18,14 +18,12 @@ $ git show-branch
 from __future__ import print_function
 
 import os
-from pathlib import Path
 
 import sys
 from subprocess import Popen, PIPE
 import re
 from pprint import pprint
-import utils
-from tabulate import tabulate
+
 
 
 def zipdir(path, filename):
@@ -42,7 +40,7 @@ def execute(cmd):
 
     p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
-    return out+err
+    return out.decode("utf-8")+err.decode("utf-8")
 
 
 def is_git(path):
@@ -53,11 +51,22 @@ class GIT:
 
     git = "/usr/bin/git"
 
-    def __init__(self, directory="."):
-        self.directory = os.path.abspath(directory)
+    def __init__(self, path=".", name="", desc="", tags=None):
 
-    @property
-    def name(self):
+        #self.path = os.path.abspath(path)
+        self.directory = path
+
+        self.name = name
+        self.tags = tags  # Repository Tags
+        self.desc = desc  # Repository Description
+        self.key  = ""  # Path of SSH private Key
+        self.host = ""  # Remote Repository host
+
+        if not is_git(path):
+            print("Git Repository not in this path")
+
+
+    def get_name(self):
         return os.path.basename(self.directory)
 
     def gitrun(self, command):
@@ -365,6 +374,11 @@ class GIT:
 
     def __repr__(self):
         text = """
+        Name             : {name}
+
+        Description:
+        {desc}
+
         Directory        : {directory}
         Current Branch   : {current}
 
@@ -387,11 +401,17 @@ class GIT:
             globaluser = self.get_user_global(),
             localuser = self.get_user_local(),
             remotes = self.remote_branches(),
-            lastcommit = "\n\t".join(self.last_commit())
+            lastcommit = "\n\t".join(self.last_commit()),
+            desc=self.desc,
+            name=self.name,
         )
 
         return text
 
+
+    def cd(self):
+        print("Changed to dir: %s" % self.directory)
+        os.chdir(self.directory)
 
 
 
