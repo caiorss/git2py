@@ -185,6 +185,10 @@ class GIT:
         out = self.gitrun("push {} {}".format(remote, local))
         return out
 
+    def pull(self, local="master", remote="origin"):
+        out = self.gitrun("pull {} {}".format(remote, local))
+        return out
+    
     def untracked_files(self):
         out= self.gitrun("status")
         o1 = re.findall("Untracked files:(.*)", out, re.DOTALL)
