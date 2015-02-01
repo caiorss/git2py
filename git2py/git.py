@@ -2,20 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 
-$ git show-branch
-* [dev] dtime library updated
- ! [master] saturated_steam.txt
---
-*  [dev] dtime library updated
-*  [dev^] added date parser
-*  [dev~2] files added
-*  [dev~3] added files
-*  [dev~4] shell improved project hirarchy improved
-*  [dev~5] added prefnum
-*+ [master] saturated_steam.txt
+
+Module to control and analysis GIT repositories in a Syntax Sugar way
+the aim of this module is to implement a GIT DSL ( Domain Specific Language)
+to make version control easier and faster.
 
 """
 from __future__ import print_function
+
+
 
 import os
 
@@ -25,9 +20,9 @@ import re
 from pprint import pprint
 
 
-
 def zipdir(path, filename):
     import zipfile
+
     zip = zipfile.ZipFile(filename, 'w')
     for root, dirs, files in os.walk(path):
         for file in files:
@@ -37,10 +32,9 @@ def zipdir(path, filename):
 
 
 def execute(cmd):
-
     p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
-    return out.decode("utf-8")+err.decode("utf-8")
+    return out.decode("utf-8") + err.decode("utf-8")
 
 
 def is_git(path):
@@ -48,18 +42,17 @@ def is_git(path):
 
 
 class GIT:
-
     git = "/usr/bin/git"
 
     def __init__(self, path=".", name="", desc="", tags=None):
 
-        #self.path = os.path.abspath(path)
+        # self.path = os.path.abspath(path)
         self.directory = path
 
         self.name = name
         self.tags = tags  # Repository Tags
         self.desc = desc  # Repository Description
-        self.key  = ""  # Path of SSH private Key
+        self.key = ""  # Path of SSH private Key
         self.host = ""  # Remote Repository host
 
         if not is_git(path):
@@ -72,6 +65,10 @@ class GIT:
     def gitrun(self, command):
         pwd = os.getcwd()
         os.chdir(self.directory)
+
+        if not is_git(self.directory):
+            raise Exception("Error: It is not a git Repository yet.")
+
         out = self.run("{} {} ".format(GIT.git, command))
         os.chdir(pwd)
         return out
@@ -88,8 +85,8 @@ class GIT:
         self.run('git config --local user.email "{}"'.format(email))
 
     def get_user_global(self):
-        user= execute("git config --get user.name").strip()
-        email= execute("git config --get user.email").strip()
+        user = execute("git config --get user.name").strip()
+        email = execute("git config --get user.email").strip()
         return "{} <{}>".format(user, email)
 
     def get_user_local(self):
@@ -113,11 +110,11 @@ class GIT:
 
     def authors(self):
         out = self.run("git log")
-        authors =  re.findall(r"Author:\s*(\S+)\s<(.*)>", out)
+        authors = re.findall(r"Author:\s*(\S+)\s<(.*)>", out)
 
         authors = map(lambda x: "{} <{}>".format(x[0], x[1]), authors)
         authors = sorted(set(authors))
-        #print(authors)
+        # print(authors)
         return authors
 
     def branches(self, type=""):
@@ -128,10 +125,39 @@ class GIT:
         out = self.run("git branch {}".format(type))
         return list(map(lambda x: x.strip(), out.splitlines()))
 
+
+    def add_files(self, files="*.py *.sh"):
+        return self.gitrun("add {}".format(files))
+
+
+    def all_branches(self):
+        return self.branches('-a')
+
+    def current_branch(self):
+        return self.gitrun("rev-parse --abbrev-ref HEAD").strip()
+
+    def remote_url(self):
+        """
+        List all remote brances URLS
+
+        :return: Remote branch URLS
+        """
+        return self.run("git remote -v")
+
+    def remote_url_remove(self, remote_branch):
+        """
+        Remove Remote Branch URL
+
+        :param remote_branch:   Remote Branch Name, example: Origin
+        :return:
+        """
+        self.gitrun("remote rm {}".format(remote_branch))
+
+
     def remote_branches(self):
         return self.run("git remote").split()
 
-    def add_remote(self, name, url):
+    def remote_add(self, url, name="origin"):
         """
         Add Remote Branch
 
@@ -145,25 +171,17 @@ class GIT:
         add_remote("beanstalk", "git@accountname.beanstalkapp.com:/gitreponame.git")
 
         """
-        #git remote add beanstalk git@accountname.beanstalkapp.com:/gitreponame.git
+        if not self.remote_url():
+            # git remote add beanstalk git@accountname.beanstalkapp.com:/gitreponame.git
+            self.gitrun("remote add {} {}".format(name, url))
+            self.pull()
+            self.push()
+
         self.gitrun("remote add {} {}".format(name, url))
 
 
-    def all_branches(self):
-        return self.branches('-a')
-
-    def current_branch(self):
-        return self.gitrun("rev-parse --abbrev-ref HEAD").strip()
-
-    def remote_url(self):
-        """
-        List all remote URLS
-        :return: Remote branch URLS
-        """
-        return self.run("git remote -v")
-
     def status(self):
-        out= self.gitrun("status")
+        out = self.gitrun("status")
         modified = re.findall("modified:\s+(.*)", out)
 
         pprint(modified)
@@ -188,9 +206,9 @@ class GIT:
     def pull(self, local="master", remote="origin"):
         out = self.gitrun("pull {} {}".format(remote, local))
         return out
-    
+
     def untracked_files(self):
-        out= self.gitrun("status")
+        out = self.gitrun("status")
         o1 = re.findall("Untracked files:(.*)", out, re.DOTALL)
         if o1:
             untracked = re.findall("^\s+(.*)", o1[0], re.M)
@@ -202,11 +220,11 @@ class GIT:
 
 
     def modified_files(self):
-        out= self.gitrun("status")
+        out = self.gitrun("status")
         modified = re.findall("modified:\s+(.*)", out)
         return modified
 
-        #print(out)
+        # print(out)
 
     def list_files(self, branch=""):
 
@@ -257,7 +275,7 @@ class GIT:
         https://help.github.com/articles/changing-author-info/
         git push --force --tags origin 'refs/heads/*'
         """
-        
+
         script = """
         git  filter-branch --env-filter '
         OLD_EMAIL="{OLD_EMAIL}"
@@ -311,10 +329,12 @@ class GIT:
         print(self.run('git log --pretty=format:"%C(yellow)%h%Cred%d %Creset%s%Cblue [%cn]" --decorate'))
 
     def ll(self):
-        print(self.run("""git log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat"""))
+        print(self.run(
+            """git log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat"""))
 
     def lds(self):
-        print(self.run("""git log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=short"""))
+        print(self.run(
+            """git log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=short"""))
 
     def archive(self, branch="master"):
         name = os.path.basename(self.directory)
@@ -354,6 +374,7 @@ class GIT:
         :return:
         """
         from datetime import datetime
+
         name = os.path.basename(self.directory)
         date = datetime.today().strftime("%Y-%m-%d")
         filename = "{}-backup-{}.zip".format(name, date)
@@ -375,6 +396,18 @@ class GIT:
         """
         self.gitrun("commit -a --amend -C HEAD")
 
+    def tracked_files(self):
+        """
+        Returna a list of all tracked files in the repository.
+        :return:
+        """
+        return self.gitrun("ls-files").strip().splitlines()
+
+    def show_tracked_files(self):
+        """
+        Print tracked files
+        """
+        print(self.gitrun("ls-files"))
 
     def __repr__(self):
         text = """
@@ -398,26 +431,20 @@ class GIT:
         {lastcommit}
         """.strip('\n')
 
-        text= text.format(
+        text = text.format(
             directory=self.directory,
             current=self.current_branch(),
             branches=self.branches(),
-            globaluser = self.get_user_global(),
-            localuser = self.get_user_local(),
-            remotes = self.remote_branches(),
-            lastcommit = "\n\t".join(self.last_commit()),
+            globaluser=self.get_user_global(),
+            localuser=self.get_user_local(),
+            remotes=self.remote_branches(),
+            lastcommit="\n\t".join(self.last_commit()),
             desc=self.desc,
             name=self.name,
         )
 
         return text
 
-
     def cd(self):
         print("Changed to dir: %s" % self.directory)
         os.chdir(self.directory)
-
-
-
-    #import IPython
-    #IPython.embed()
